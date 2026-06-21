@@ -25,9 +25,8 @@ func RequestFromReader(Reader io.Reader) (*Request, error) {
 	input, err := io.ReadAll(Reader)
 
 	if err != nil {
-		fmt.Println("Error is not nil at requiest from reader, trying to read from io.Reader")
+		return nil, err
 	}
-
 	requestLine, _, err := parseRequestLine(string(input))
 
 	if err != nil {
@@ -46,7 +45,7 @@ func parseRequestLine(input string) (*RequestLine, string, error) {
 
 	if idx == -1 {
 		fmt.Println("Seperator not found in input!")
-		return nil, input, nil
+		return nil, input, MALFORMED_REQUEST_ERROR
 	}
 
 	// goes up to the first seperator and takes a slice of the string
@@ -83,5 +82,5 @@ func parseRequestLine(input string) (*RequestLine, string, error) {
 	}
 
 	// succesfully return the new struct
-	return &requestLineStruct, input[idx+2:], nil
+	return &requestLineStruct, input[idx+len(SEPERATOR):], nil
 }
