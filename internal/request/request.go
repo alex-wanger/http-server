@@ -51,9 +51,18 @@ func (r *Request) parse(data []byte) (int, error) {
 	}
 
 	line := data[:idx]
-	parseRequestLine(string(line))
+	reqLine, n, err := parseRequestLine(string(line))
 
-	return idx + len(SEPARATOR), nil
+	if err != nil {
+		return 0, err
+	}
+
+	r.RequestLine = *reqLine
+	r.State = StateDone
+	fmt.Println(r.RequestLine)
+	fmt.Println("this is the state " + r.State)
+
+	return n, nil
 }
 
 func RequestFromReader(reader io.Reader) (*Request, error) {
@@ -92,18 +101,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 }
 
 func parseRequestLine(input string) (*RequestLine, int, error) {
-	idx := strings.Index(input, SEPARATOR)
-
-	if idx == -1 {
-		fmt.Println("SEPARATOR not found in input!")
-		return nil, 0, errors.New("SEPARATOR not found in input!")
-		// not an error, just not enough input
-	}
-
-	// goes up to the first SEPARATOR and takes a slice of the string
-	var requestLine string = input[0 : idx+2]
-
-	MethodTargetProtocol := strings.Split(requestLine, " ")
+	MethodTargetProtocol := strings.Split(input, " ")
 
 	if len(MethodTargetProtocol) != 3 {
 		fmt.Println("Not enough SEPARATORs found in request line!")
@@ -114,7 +112,7 @@ func parseRequestLine(input string) (*RequestLine, int, error) {
 	Target := MethodTargetProtocol[1]
 	Protocol := strings.TrimSpace(MethodTargetProtocol[2])
 
-	fmt.Println("MTP "+Method, Target, Protocol)
+	//fmt.Println("MTP "+Method, Target, Protocol)
 
 	if strings.ToUpper(Method) != Method {
 		fmt.Println("Malformed METHOD in request line!")
@@ -135,5 +133,5 @@ func parseRequestLine(input string) (*RequestLine, int, error) {
 	}
 
 	// succesfully return the new struct
-	return &requestLineStruct, idx + len(SEPARATOR), nil
+	return &requestLineStruct, len(input), nil
 }
