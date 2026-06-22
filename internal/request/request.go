@@ -60,7 +60,6 @@ func (r *Request) parse(data []byte) (int, error) {
 	r.RequestLine = *reqLine
 	r.State = StateDone
 	fmt.Println(r.RequestLine)
-	fmt.Println("this is the state " + r.State)
 
 	return n, nil
 }
