@@ -3,33 +3,41 @@ package headers
 import (
 	"bytes"
 	"errors"
+	"strings"
 )
 
 type Headers map[string]string
 
-const SEPARATOR = "\r\n\r\n"
+const CRLF = "\r\n"
 
-func NewHeadersA() Headers {
+func NewHeaders() Headers {
 	return make(Headers)
 }
 
 func (h Headers) Parse(data []byte) (int, bool, error) {
 	//TODO: this has to have it's own buffer as well
-	//
-	idx := bytes.Index(data, []byte(SEPARATOR))
+	idx := bytes.Index(data, []byte(CRLF))
 
 	if idx == -1 {
 		return 0, false, nil
 	}
 
-	content := bytes.Split(data[:idx], []byte(":"))
-
-	if (len(content)) > 2 {
-		return 0, false, errors.New("Too many fields within the header")
+	// END OF HEADERS, PARSING IS DONE
+	if idx == 0 {
+		return len(CRLF), true, nil
 	}
 
-	h[string(content[0])] = string(content[1])
+	key, value, found := bytes.Cut(data[:idx], []byte(":"))
 
-	return 0, false, nil
+	if !found {
+		return 0, false, errors.New("malformed header: no colon found")
+	}
 
+	if bytes.HasPrefix(key, []byte(" ")) || bytes.HasSuffix(key, []byte(" ")) {
+		return 0, false, errors.New("malformed header: spaces around key")
+	}
+
+	h[(string(key))] = strings.TrimSpace(string(value))
+
+	return len(data[:idx]) + len(CRLF), false, nil
 }
